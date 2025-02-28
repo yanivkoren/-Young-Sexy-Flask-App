@@ -30,6 +30,53 @@ SYSTEM_PROMPT_FILES = {
 }
 
 ###############################################################################
+# HTML Template (Main Page)
+###############################################################################
+
+MAIN_PAGE_TEMPLATE = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Young & Sexy Flask App</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background: linear-gradient(to right, #ff9966, #ff5e62); color: white; }
+        .container { max-width: 600px; margin: 2em auto; padding: 2em; background: rgba(255,255,255,0.1); border-radius: 10px; }
+        select, button { padding: 10px; margin: 10px; border-radius: 5px; font-size: 16px; }
+        .response-container { margin-top: 2em; background: rgba(0,0,0,0.3); padding: 1em; border-radius: 8px; }
+        .model-name { font-weight: bold; color: #fffdcc; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Young & Sexy Flask App</h1>
+        <h2>Select a Level and Gender</h2>
+        <form method="POST" action="{{ url_for('process_request') }}">
+            <label for="level">Choose Level:</label><br>
+            <select name="level" id="level">
+                <option value="level1">Level-1</option>
+                <option value="level2">Level-2</option>
+                <option value="level3">Level-3</option>
+                <option value="level4">Level-4</option>
+            </select>
+            <br><br>
+            <button type="submit" name="gender" value="men">MEN</button>
+            <button type="submit" name="gender" value="women">FEMALE</button>
+        </form>
+        {% if hermes_response and grok_response %}
+        <div class="response-container">
+            <div class="model-name">Nous Hermes Response:</div>
+            <div>{{ hermes_response }}</div>
+            <br>
+            <div class="model-name">Grok Response:</div>
+            <div>{{ grok_response }}</div>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
+"""
+
+###############################################################################
 # Utility Functions
 ###############################################################################
 
@@ -136,3 +183,9 @@ def process_request():
                                   hermes_response=hermes_response,
                                   grok_response=grok_response)
 
+###############################################################################
+# Run the Flask App
+###############################################################################
+
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=5000)
