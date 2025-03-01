@@ -75,6 +75,48 @@ MAIN_PAGE_TEMPLATE = """
 </body>
 </html>
 """
+EDIT_PROMPTS_TEMPLATE = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit System Prompts</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f4; color: #333; }
+        .container { max-width: 800px; margin: 2em auto; padding: 2em; background: white; border-radius: 10px; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); }
+        textarea { width: 100%; height: 150px; margin-top: 10px; padding: 10px; font-size: 14px; border-radius: 5px; border: 1px solid #ccc; }
+        button { padding: 10px 20px; margin-top: 10px; background: #007bff; color: white; border: none; cursor: pointer; border-radius: 5px; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Edit System Prompts</h1>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <form method="POST">
+            <label for="filename">Select Prompt File:</label>
+            <select name="filename">
+                {% for name, path in files.items() %}
+                    <option value="{{ path }}">{{ name }}</option>
+                {% endfor %}
+            </select>
+            <br><br>
+            <label>Edit Content:</label>
+            <textarea name="content">{{ prompts['level1'] }}</textarea>
+            <br>
+            <button type="submit">Save Changes</button>
+        </form>
+        <br>
+        <a href="/">Back to Home</a>
+    </div>
+</body>
+</html>
+"""
 
 ###############################################################################
 # Utility Functions
@@ -182,6 +224,26 @@ def process_request():
     return render_template_string(MAIN_PAGE_TEMPLATE,
                                   hermes_response=hermes_response,
                                   grok_response=grok_response)
+
+@app.route("/edit_prompts", methods=["GET", "POST"])
+def edit_prompts():
+    """Allows the user to edit system prompt files via a web interface."""
+    if request.method == "POST":
+        filename = request.form.get("filename")
+        new_content = request.form.get("content")
+
+        if filename not in SYSTEM_PROMPT_FILES.values():
+            flash("Invalid file selection!", "error")
+            return redirect(url_for("edit_prompts"))
+
+        write_file_content(filename, new_content)
+        flash(f"Updated {filename} successfully!", "success")
+        return redirect(url_for("edit_prompts"))
+
+    # Load all files for display
+    prompts = {name: read_file_content(path) for name, path in SYSTEM_PROMPT_FILES.items()}
+
+    return render_template_string(EDIT_PROMPTS_TEMPLATE, prompts=prompts, files=SYSTEM_PROMPT_FILES)
 
 ###############################################################################
 # Run the Flask App
