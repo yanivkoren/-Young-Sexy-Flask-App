@@ -54,6 +54,12 @@ MAIN_PAGE_TEMPLATE = """
             background: linear-gradient(to right, black, red, black); /* רקע מעוצב */
             color: white;
         }
+        .game-logo {
+            width: 250px;  /* גודל הלוגו – ניתן לשנות */
+            max-width: 90%;  /* שלא יחרוג ממסכים קטנים */
+            display: block;
+            margin: 0 auto 20px auto; /* ממרכז את הלוגו ומוסיף רווח מתחתיו */
+        }
 
         /* עיצוב הספינר */
         .loading-spinner {
@@ -79,7 +85,10 @@ MAIN_PAGE_TEMPLATE = """
     <div class="container">
         <div id="loadingSpinner" class="loading-spinner"></div>
         <button class="settings-icon" onclick="window.location.href='/edit_prompts'">⚙️</button>
-        <h1>Young & Sexy Flask App</h1>
+
+        <!-- לוגו המשחק -->
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Game Logo" class="game-logo">
+
         <h2>Select a Level and Choose Randomly</h2>
         <form method="POST" action="{{ url_for('choose_randomly') }}">
             <label for="level">Choose Level:</label><br>
