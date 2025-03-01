@@ -1,1 +1,1 @@
-system_prompt_level3.txt
+level 3

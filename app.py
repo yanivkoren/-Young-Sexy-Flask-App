@@ -87,6 +87,12 @@ EDIT_PROMPTS_TEMPLATE = """
         button { padding: 10px 20px; margin-top: 10px; background: #007bff; color: white; border: none; cursor: pointer; border-radius: 5px; }
         button:hover { background: #0056b3; }
     </style>
+    <script>
+        function loadFileContent() {
+            var selectedFile = document.getElementById("filename").value;
+            window.location.href = "/edit_prompts?filename=" + selectedFile;
+        }
+    </script>
 </head>
 <body>
     <div class="container">
@@ -98,16 +104,17 @@ EDIT_PROMPTS_TEMPLATE = """
                 {% endfor %}
             {% endif %}
         {% endwith %}
+        
         <form method="POST">
             <label for="filename">Select Prompt File:</label>
-            <select name="filename">
+            <select id="filename" name="filename" onchange="loadFileContent()">
                 {% for name, path in files.items() %}
-                    <option value="{{ path }}">{{ name }}</option>
+                    <option value="{{ path }}" {% if selected_file == path %}selected{% endif %}>{{ name }}</option>
                 {% endfor %}
             </select>
             <br><br>
             <label>Edit Content:</label>
-            <textarea name="content">{{ prompts['level1'] }}</textarea>
+            <textarea name="content">{{ file_content }}</textarea>
             <br>
             <button type="submit">Save Changes</button>
         </form>
@@ -227,23 +234,25 @@ def process_request():
 
 @app.route("/edit_prompts", methods=["GET", "POST"])
 def edit_prompts():
-    """Allows the user to edit system prompt files via a web interface."""
+    """Allows the user to edit system prompt files dynamically."""
+    selected_file = request.args.get("filename", "system_prompt_level1.txt")  # Default to level1
+    file_content = read_file_content(selected_file)
+
     if request.method == "POST":
-        filename = request.form.get("filename")
+        new_filename = request.form.get("filename")
         new_content = request.form.get("content")
 
-        if filename not in SYSTEM_PROMPT_FILES.values():
+        if new_filename not in SYSTEM_PROMPT_FILES.values():
             flash("Invalid file selection!", "error")
-            return redirect(url_for("edit_prompts"))
+            return redirect(url_for("edit_prompts", filename=selected_file))
 
-        write_file_content(filename, new_content)
-        flash(f"Updated {filename} successfully!", "success")
-        return redirect(url_for("edit_prompts"))
+        write_file_content(new_filename, new_content)
+        flash(f"Updated {new_filename} successfully!", "success")
 
-    # Load all files for display
-    prompts = {name: read_file_content(path) for name, path in SYSTEM_PROMPT_FILES.items()}
+        # Reload the updated content
+        return redirect(url_for("edit_prompts", filename=new_filename))
 
-    return render_template_string(EDIT_PROMPTS_TEMPLATE, prompts=prompts, files=SYSTEM_PROMPT_FILES)
+    return render_template_string(EDIT_PROMPTS_TEMPLATE, selected_file=selected_file, file_content=file_content, files=SYSTEM_PROMPT_FILES)
 
 ###############################################################################
 # Run the Flask App
