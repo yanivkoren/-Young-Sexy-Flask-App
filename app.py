@@ -3,10 +3,15 @@ import json
 import requests
 import logging
 from flask import Flask, render_template_string, request, redirect, url_for, flash
+# from flask_markdown import Markdown
+from flask import Markup
+import mistune
 
 # Initialize Flask app
 app = Flask(__name__)
 app.secret_key = "CHANGE_ME_TO_SOMETHING_RANDOM"
+# את זה יש להוסיף אחרי יצירת האובייקט של Flask
+# Markdown(app)
 
 # Set up logging
 logging.basicConfig(
@@ -66,11 +71,11 @@ MAIN_PAGE_TEMPLATE = """
         </form>
         {% if hermes_response and grok_response %}
         <div class="response-container">
-            <div class="model-name">Nous Hermes Response:</div>
-            <div>{{ hermes_response }}</div>
+            <div class="model-name" style="text-align: left; direction: ltr;">Nous Hermes Response:</div>
+            <div style="text-align: left; direction: ltr;">{{ hermes_response }}</div>
             <br>
-            <div class="model-name">Grok Response:</div>
-            <div>{{ grok_response }}</div>
+            <div class="model-name" style="text-align: right; direction: rtl;">Grok Response:</div>
+            <div style="text-align: right; direction: rtl;">{{ grok_response }}</div>
         </div>
         {% endif %}
     </div>
@@ -230,9 +235,15 @@ def process_request():
 
     logging.info("Successfully retrieved responses from both models.")
 
+    # 📌 **עיבוד Markdown בפייתון לפני שליחת הנתונים ל-HTML**
+    hermes_response_html = Markup(mistune.markdown(hermes_response))
+    grok_response_html = Markup(mistune.markdown(grok_response))
+
     return render_template_string(MAIN_PAGE_TEMPLATE,
-                                  hermes_response=hermes_response,
-                                  grok_response=grok_response)
+                                  hermes_response=hermes_response_html,
+                                  grok_response=grok_response_html)
+
+
 
 @app.route("/edit_prompts", methods=["GET", "POST"])
 def edit_prompts():
