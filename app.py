@@ -6,6 +6,7 @@ from flask import Flask, render_template_string, request, redirect, url_for, fla
 # from flask_markdown import Markdown
 from flask import Markup
 import mistune
+import random
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -50,14 +51,34 @@ MAIN_PAGE_TEMPLATE = """
         .response-container { margin-top: 2em; background: rgba(0,0,0,0.3); padding: 1em; border-radius: 8px; }
         .model-name { font-weight: bold; color: #fffdcc; }
         .settings-icon { position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 24px; background: none; border: none; color: white; }
+
+        /* עיצוב הספינר */
+        .loading-spinner {
+            display: none; /* מוסתר כברירת מחדל */
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top: 5px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+
+        /* אנימציה של הסיבוב */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
+
 </head>
 <body>
     <div class="container">
+        <div id="loadingSpinner" class="loading-spinner"></div>
         <button class="settings-icon" onclick="window.location.href='/edit_prompts'">⚙️</button>
         <h1>Young & Sexy Flask App</h1>
-        <h2>Select a Level and Gender</h2>
-        <form method="POST" action="{{ url_for('process_request') }}">
+        <h2>Select a Level and Choose Randomly</h2>
+        <form method="POST" action="{{ url_for('choose_randomly') }}">
             <label for="level">Choose Level:</label><br>
             <select name="level" id="level">
                 <option value="level1">Level-1</option>
@@ -66,9 +87,18 @@ MAIN_PAGE_TEMPLATE = """
                 <option value="level4">Level-4</option>
             </select>
             <br><br>
-            <button type="submit" name="gender" value="men">MEN</button>
-            <button type="submit" name="gender" value="women">FEMALE</button>
+            <button type="submit">Choose Randomly</button>
         </form>
+
+        {% if gender %}
+            <h3>Selected Gender: {{ gender | upper }}</h3>
+            <form method="POST" action="{{ url_for('process_request') }}" onsubmit="showLoading()">
+                <input type="hidden" name="gender" value="{{ gender }}">
+                <input type="hidden" name="level" value="{{ level }}">
+                <button type="submit" id="getTaskButton">Get Task</button>
+            </form>
+        {% endif %}
+
         {% if hermes_response and grok_response %}
         <div class="response-container">
             <div class="model-name" style="text-align: left; direction: ltr;">Nous Hermes Response:</div>
@@ -77,8 +107,23 @@ MAIN_PAGE_TEMPLATE = """
             <div class="model-name" style="text-align: right; direction: rtl;">Grok Response:</div>
             <div style="text-align: right; direction: rtl;">{{ grok_response }}</div>
         </div>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                document.getElementById("loadingSpinner").style.display = "none"; // הסתרת הספינר
+            });
+        </script>
         {% endif %}
+
     </div>
+    <script>
+        function showLoading() {
+            var getTaskButton = document.getElementById("getTaskButton");
+            var loadingSpinner = document.getElementById("loadingSpinner");
+
+            if (getTaskButton) getTaskButton.style.display = "none";  // הסתרת הכפתור
+            if (loadingSpinner) loadingSpinner.style.display = "block"; // הצגת הספינר
+        }
+    </script>
 </body>
 </html>
 """
@@ -192,10 +237,25 @@ def index():
     logging.info("Rendering main page.")
     return render_template_string(MAIN_PAGE_TEMPLATE)
 
+@app.route("/choose_randomly", methods=["POST"])
+def choose_randomly():
+    level = request.form.get("level", "level1")  # קבלת הרמה שנבחרה, ברירת מחדל ל-level1
+    gender = random.choice(["men", "women"])  # בחירה רנדומלית בין גבר לאישה
+
+    # ודא שכל הנתונים שנדרשים לדף יוחזרו כדי למנוע שגיאות
+    return render_template_string(
+        MAIN_PAGE_TEMPLATE, 
+        gender=gender, 
+        level=level, 
+        hermes_response=None, 
+        grok_response=None
+    )
+
+
 @app.route("/", methods=["POST"])
 def process_request():
-    level = request.form.get("level")
-    gender = request.form.get("gender")
+    level = request.form.get("level", "level1")  # שמירה על רמת המשימה
+    gender = request.form.get("gender")  # שמירה על המגדר שנבחר
 
     logging.info(f"Received form submission: Level={level}, Gender={gender}")
 
@@ -204,13 +264,10 @@ def process_request():
         flash("Please select a level and gender.", "error")
         return redirect(url_for("index"))
 
-    # Read system prompt file
     system_prompt_file = SYSTEM_PROMPT_FILES.get(level, "system_prompt_level1.txt")
     system_prompt = read_file_content(system_prompt_file)
-
     user_prompt = "Write task for men" if gender.lower() == "men" else "Write task for women"
 
-    # Call Nous Hermes model
     hermes_response = call_openrouter_api(
         model_name="nousresearch/nous-hermes-2-mixtral-8x7b-dpo",
         system_prompt=system_prompt,
@@ -221,7 +278,6 @@ def process_request():
         flash("Error retrieving response from Nous Hermes.", "error")
         return redirect(url_for("index"))
 
-    # Call Grok model for translation
     translation_system_prompt = read_file_content(SYSTEM_PROMPT_FILES["translation"])
     grok_response = call_openrouter_api(
         model_name="x-ai/grok-2-vision-1212",
@@ -233,15 +289,20 @@ def process_request():
         flash("Error retrieving response from Grok model.", "error")
         return redirect(url_for("index"))
 
-    logging.info("Successfully retrieved responses from both models.")
+    logging.info(f"Hermes Response: {hermes_response[:200]}")  # לוג לקיצור פלט
+    logging.info(f"Grok Response: {grok_response[:200]}")
 
-    # 📌 **עיבוד Markdown בפייתון לפני שליחת הנתונים ל-HTML**
+    # 📌 עיבוד Markdown בפייתון לפני שליחת הנתונים ל-HTML
     hermes_response_html = Markup(mistune.markdown(hermes_response))
     grok_response_html = Markup(mistune.markdown(grok_response))
 
     return render_template_string(MAIN_PAGE_TEMPLATE,
                                   hermes_response=hermes_response_html,
-                                  grok_response=grok_response_html)
+                                  grok_response=grok_response_html,
+                                  gender=gender,
+                                  level=level)
+
+
 
 
 
