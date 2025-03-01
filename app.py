@@ -8,10 +8,13 @@ from flask import Markup
 import mistune
 import random
 from flask import send_file
+import os
 
 # Initialize Flask app
 app = Flask(__name__)
-app.secret_key = "CHANGE_ME_TO_SOMETHING_RANDOM"
+# app.secret_key = "CHANGE_ME_TO_SOMETHING_RANDOM"
+app.secret_key = os.getenv("SECRET_KEY", "fallback-secret-key")
+
 # את זה יש להוסיף אחרי יצירת האובייקט של Flask
 # Markdown(app)
 
