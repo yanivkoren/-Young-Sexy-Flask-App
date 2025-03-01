@@ -39,15 +39,17 @@ MAIN_PAGE_TEMPLATE = """
 <head>
     <title>Young & Sexy Flask App</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; background: linear-gradient(to right, #ff9966, #ff5e62); color: white; }
-        .container { max-width: 600px; margin: 2em auto; padding: 2em; background: rgba(255,255,255,0.1); border-radius: 10px; }
+        body { font-family: Arial, sans-serif; text-align: center; background: linear-gradient(to right, #ff9966, #ff5e62); color: white; margin: 0; }
+        .container { max-width: 600px; margin: 2em auto; padding: 2em; background: rgba(255,255,255,0.1); border-radius: 10px; position: relative; }
         select, button { padding: 10px; margin: 10px; border-radius: 5px; font-size: 16px; }
         .response-container { margin-top: 2em; background: rgba(0,0,0,0.3); padding: 1em; border-radius: 8px; }
         .model-name { font-weight: bold; color: #fffdcc; }
+        .settings-icon { position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 24px; background: none; border: none; color: white; }
     </style>
 </head>
 <body>
     <div class="container">
+        <button class="settings-icon" onclick="window.location.href='/edit_prompts'">⚙️</button>
         <h1>Young & Sexy Flask App</h1>
         <h2>Select a Level and Gender</h2>
         <form method="POST" action="{{ url_for('process_request') }}">
