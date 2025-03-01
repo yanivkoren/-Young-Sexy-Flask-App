@@ -7,6 +7,7 @@ from flask import Flask, render_template_string, request, redirect, url_for, fla
 from flask import Markup
 import mistune
 import random
+from flask import send_file
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -107,12 +108,77 @@ MAIN_PAGE_TEMPLATE = """
             <div class="model-name" style="text-align: right; direction: rtl;">Grok Response:</div>
             <div style="text-align: right; direction: rtl;">{{ grok_response }}</div>
         </div>
+
+        <!-- טיימר -->
+        <div class="timer-container">
+            <h3>Set Timer:</h3>
+            <select id="timerDuration">
+                <option value="30">30 seconds</option>
+                <option value="60" selected>1 minute</option>
+                <option value="90">1.5 minutes</option>
+                <option value="120">2 minutes</option>
+            </select>
+            <br><br>
+            <button onclick="startTimer()">Start Timer</button>
+            <h3 id="timerDisplay">Time Left: --:--</h3>
+        </div>
+
+        <!-- אלמנט להפקת צליל -->
+        <audio id="alarmSound" src="/alarm.mp3"></audio>
+
         <script>
+            // הסתרת הספינר כאשר הנתונים מוצגים
             document.addEventListener("DOMContentLoaded", function() {
-                document.getElementById("loadingSpinner").style.display = "none"; // הסתרת הספינר
+                document.getElementById("loadingSpinner").style.display = "none"; 
             });
+
+            let timer;
+            let audio = document.getElementById("alarmSound");
+
+            // פונקציה שמאפשרת לדפדפן "לאשר" השמעת צליל
+            function enableAudio() {
+                audio.play().then(() => {
+                    audio.pause();
+                    audio.currentTime = 0;  // מחזיר להתחלה אחרי ההפעלה הראשונה
+                }).catch(error => {
+                    console.error("Audio play blocked:", error);
+                });
+
+                document.removeEventListener("click", enableAudio);
+            }
+
+            // מאזין שמאפשר אודיו כאשר המשתמש לוחץ על המסך
+            document.addEventListener("click", enableAudio);
+
+            function startTimer() {
+                let duration = parseInt(document.getElementById("timerDuration").value);
+                let display = document.getElementById("timerDisplay");
+
+                clearInterval(timer);  // איפוס טיימר קודם
+                let timeLeft = duration;
+
+                function updateDisplay() {
+                    let minutes = Math.floor(timeLeft / 60);
+                    let seconds = timeLeft % 60;
+                    display.innerHTML = `Time Left: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                }
+
+                updateDisplay();  // עדכון ראשוני
+                timer = setInterval(() => {
+                    if (timeLeft > 0) {
+                        timeLeft--;
+                        updateDisplay();
+                    } else {
+                        clearInterval(timer);
+                        audio.play();  // עכשיו הצליל יפעל
+                        display.innerHTML = "Time's up!";
+                    }
+                }, 1000);
+            }
         </script>
         {% endif %}
+
+
 
     </div>
     <script>
@@ -304,7 +370,9 @@ def process_request():
 
 
 
-
+@app.route('/alarm.mp3')
+def serve_audio():
+    return send_file("alarm.mp3", mimetype="audio/mpeg")
 
 @app.route("/edit_prompts", methods=["GET", "POST"])
 def edit_prompts():
