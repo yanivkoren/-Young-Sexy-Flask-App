@@ -81,10 +81,10 @@ MAIN_PAGE_TEMPLATE = """
         <form method="POST" action="{{ url_for('choose_randomly') }}">
             <label for="level">Choose Level:</label><br>
             <select name="level" id="level">
-                <option value="level1">Level-1</option>
-                <option value="level2">Level-2</option>
-                <option value="level3">Level-3</option>
-                <option value="level4">Level-4</option>
+                <option value="level1" {% if level == "level1" %}selected{% endif %}>Level-1</option>
+                <option value="level2" {% if level == "level2" %}selected{% endif %}>Level-2</option>
+                <option value="level3" {% if level == "level3" %}selected{% endif %}>Level-3</option>
+                <option value="level4" {% if level == "level4" %}selected{% endif %}>Level-4</option>
             </select>
             <br><br>
             <button type="submit">Choose Randomly</button>
@@ -239,17 +239,17 @@ def index():
 
 @app.route("/choose_randomly", methods=["POST"])
 def choose_randomly():
-    level = request.form.get("level", "level1")  # קבלת הרמה שנבחרה, ברירת מחדל ל-level1
-    gender = random.choice(["men", "women"])  # בחירה רנדומלית בין גבר לאישה
+    level = request.form.get("level")  # מקבל את הערך מהטופס *ללא שינוי*
+    gender = random.choice(["men", "women"])  # בחירה אקראית בין גבר לאישה
 
-    # ודא שכל הנתונים שנדרשים לדף יוחזרו כדי למנוע שגיאות
     return render_template_string(
         MAIN_PAGE_TEMPLATE, 
         gender=gender, 
-        level=level, 
+        level=level,  # משמר את הרמה שנבחרה
         hermes_response=None, 
         grok_response=None
     )
+
 
 
 @app.route("/", methods=["POST"])
