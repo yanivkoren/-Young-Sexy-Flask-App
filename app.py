@@ -45,13 +45,15 @@ MAIN_PAGE_TEMPLATE = """
 <html>
 <head>
     <title>Young & Sexy Flask App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; background: linear-gradient(to right, #ff9966, #ff5e62); color: white; margin: 0; }
-        .container { max-width: 600px; margin: 2em auto; padding: 2em; background: rgba(255,255,255,0.1); border-radius: 10px; position: relative; }
-        select, button { padding: 10px; margin: 10px; border-radius: 5px; font-size: 16px; }
-        .response-container { margin-top: 2em; background: rgba(0,0,0,0.3); padding: 1em; border-radius: 8px; }
-        .model-name { font-weight: bold; color: #fffdcc; }
-        .settings-icon { position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 24px; background: none; border: none; color: white; }
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            background: linear-gradient(to right, black, red, black); /* רקע מעוצב */
+            color: white;
+        }
 
         /* עיצוב הספינר */
         .loading-spinner {
@@ -199,11 +201,52 @@ EDIT_PROMPTS_TEMPLATE = """
 <head>
     <title>Edit System Prompts</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f4; color: #333; }
-        .container { max-width: 800px; margin: 2em auto; padding: 2em; background: white; border-radius: 10px; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); }
-        textarea { width: 100%; height: 150px; margin-top: 10px; padding: 10px; font-size: 14px; border-radius: 5px; border: 1px solid #ccc; }
-        button { padding: 10px 20px; margin-top: 10px; background: #007bff; color: white; border: none; cursor: pointer; border-radius: 5px; }
-        button:hover { background: #0056b3; }
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: #f4f4f4;
+            color: #333;
+        }
+
+        .container {
+            max-width: 90%; /* במקום רוחב קבוע */
+            width: 600px;
+            margin: 2em auto;
+            padding: 2em;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            position: relative;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin-top: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 1rem;  /* קובע גודל טקסט יחסי */
+            width: 100%;  /* מתאים את הכפתור למסכים קטנים */
+            max-width: 300px;  /* מגביל את הרוחב המקסימלי */
+            transition: background 0.3s ease-in-out; /* מעבר חלק בצבע */
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+
     </style>
     <script>
         function loadFileContent() {
