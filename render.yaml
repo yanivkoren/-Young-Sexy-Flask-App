@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: extreme-sexual-challenges
+    env: python
+    plan: free  # ניתן לשדרג אם צריך
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app"
+    envVars:
+      - key: OPENROUTER_API_KEY
+        sync: false  # להוסיף ידנית ב- Render Dashboard
